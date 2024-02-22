@@ -3,3 +3,10 @@ test1_dict = {
     "CalculationTypeFK": 1,
     "ItemtypeFK": 1,
 }
+
+test2_rfq = {
+    "CustomerFK": 2504,
+    "CurrencyCodeFK": 1,
+    "Comment": "test-api-test",
+    "ShippingAddressCountryDescription": "United States",
+}

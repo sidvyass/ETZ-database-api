@@ -3,20 +3,28 @@ from exceptions import ItemNotFoundError, SchemaError
 from general import _get_schema
 from test_data import test1_dict
 import pyodbc
+import logging
+
 
 class MieTrakItem:
     def __init__(self):
-        # self.conn = get_connection()
-        # self.cursor = self.conn.cursor()
+        self.logger = logging.getLogger().getChild(self.__class__.__name__)
         self.table_name = "item"
-
+        
         schema = _get_schema(self.table_name)
         self.column_names = [name[0] for name in schema]
 
         self.insert_not_allowed_column_names = ["itempk", ]
-        self.default_values_dict = {
 
-        }
+        # for shubham
+        # self.default_values_dict = {
+
+        # }
+
+    def column_check(self, columns):
+        for value in columns:
+            if value not in self.column_names:
+                raise SchemaError.column_does_not_exist_error(value)
 
 
     def update_item(self, part_number: str, update_dict: dict):
@@ -61,20 +69,22 @@ class MieTrakItem:
                         VALUES (?, ?, ?, ?, ?, ?)"""
                 values_default = [0.000 for x in range(6)]
                 self.cursor.execute(query, *values_default)
-                print("Inserting into iteminventory")
 
                 query = "SELECT IDENT_CURRENT('iteminventory');"
                 self.cursor.execute(query)
                 iteminventorypk = self.cursor.fetchone()[0]
                 conn.commit()
-                print("Insert complete")
 
+                print(f"Insert into iteminventory complete {iteminventorypk}")
+                self.logger.info(f"Inserted ItemInventorypk - {iteminventorypk}")
+                
                 return iteminventorypk
         except pyodbc.Error as e:
             print(e)
     
     def insert_item(self, update_dict: dict):
-        """Inserts item"""
+        """Creates a new item. Also inserts into the item inventory table and attaches the FK."""
+        self.column_check(update_dict.keys())
         try:
             # do not use this statment after with. Connection is closed twice.
             iteminventoryfk = self._insert_item_inventory()
@@ -82,23 +92,38 @@ class MieTrakItem:
                 self.cursor = conn.cursor()
                 column_names, column_len = ", ".join([name for name in update_dict.keys()]), ", ".join(['?' for name in update_dict.keys()])
                 values = [str(val) for val in update_dict.values()]
-                # print("Inserting into item")
-                insert_query = f"""INSERT INTO item ({column_names})
+                insert_query = f"""INSERT INTO {self.table_name} ({column_names}, iteminventoryfk)
                                     VALUES ({column_len});"""
 
-                self.cursor.execute(insert_query, *values)
+                self.cursor.execute(insert_query, (*values, iteminventoryfk))
 
-                query = "SELECT IDENT_CURRENT('item');"
+                query = f"SELECT IDENT_CURRENT('{self.table_name}');"
                 self.cursor.execute(query)
                 itempk = self.cursor.fetchone()[0]
                 conn.commit()
-                print("Insert complete")
+
+                logger.info(f"Inserted into Item, Itempk: {itempk}")
 
                 return itempk
         except pyodbc.Error as e:
             print(e)
                 
+    def get_item(self, itempk, return_columns=["*"]):
+        try:
+            with get_connection() as conn:
+                cursor = conn.cursor()
+                query = f"SELECT {return_columns} FROM ITEM WHERE itempk={itempk};"
+                cursor.execute(query)
+                return cursor.fetchone()[0]
+        except pyodbc.Error as e:
+            print(e)        
 
-if __name__ == "__main__":
-    data = MieTrakItem()
-    print(data.insert_item(test1_dict))
+    def delete_item(self, itempk):
+        try:
+            with get_connection() as conn:
+                cursor = conn.cursor()
+                query = "DELETE FROM item WHERE itempk='?';"
+                cursor.execute(query, itempk)
+        except pyodbc.Error as e:
+            print(e)
+
