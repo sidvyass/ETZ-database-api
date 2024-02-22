@@ -1,8 +1,7 @@
 from connection import get_connection
 
-# convert this into a class
 
-def _get_schema(table_name):
+def _get_schema(table_name: str):
     """Provides all the schema for given table name. Includes all columns"""
     with get_connection() as conn:
         cursor = conn.cursor()
@@ -27,6 +26,7 @@ def print_schema(schema):
     for column_details in schema:
         print(f'{column_details[0]:40} {column_details[1]:20} {str(column_details[2]):10} {column_details[3]:10} {str(column_details[4]):10}')        
 
-# if __name__ == "__main__":
-#     schema = _get_schema("iteminventory")
-#     print_schema(schema)
+# WIP
+# def prettify(list_of_tuples):
+#     for x in range(len(list_of_tuples)):
+#         print()

@@ -10,3 +10,8 @@ test2_rfq = {
     "Comment": "test-api-test",
     "ShippingAddressCountryDescription": "United States",
 }
+
+test3_rfq_line = {
+    "ItemFK": 10295,
+    "QuoteFK": 2070,
+}
