@@ -1,12 +1,12 @@
 from connection import get_connection
 from exceptions import ItemNotFoundError, SchemaError
-from general import _get_schema
+from schema import _get_schema
 from test_data import test1_dict
 import pyodbc
 import logging
 
 
-class MieTrakItem:
+class Item:
     def __init__(self):
         self.logger = logging.getLogger().getChild(self.__class__.__name__)
         self.table_name = "item"
@@ -25,7 +25,6 @@ class MieTrakItem:
         for value in columns:
             if value not in self.column_names:
                 raise SchemaError.column_does_not_exist_error(value)
-
 
     def update_item(self, part_number: str, update_dict: dict):
         """
@@ -82,7 +81,7 @@ class MieTrakItem:
         except pyodbc.Error as e:
             print(e)
     
-    def insert_item(self, update_dict: dict):
+    def insert_item(self, update_dict: dict) -> int:
         """Creates a new item. Also inserts into the item inventory table and attaches the FK."""
         self.column_check(update_dict.keys())
         try:
@@ -93,16 +92,13 @@ class MieTrakItem:
                 column_names, column_len = ", ".join([name for name in update_dict.keys()]), ", ".join(['?' for name in update_dict.keys()])
                 values = [str(val) for val in update_dict.values()]
                 insert_query = f"""INSERT INTO {self.table_name} ({column_names}, iteminventoryfk)
-                                    VALUES ({column_len});"""
-
+                                    VALUES ({column_len}, ?);"""
                 self.cursor.execute(insert_query, (*values, iteminventoryfk))
-
                 query = f"SELECT IDENT_CURRENT('{self.table_name}');"
                 self.cursor.execute(query)
                 itempk = self.cursor.fetchone()[0]
                 conn.commit()
-
-                logger.info(f"Inserted into Item, Itempk: {itempk}")
+                self.logger.info(f"Inserted into Item, Itempk: {itempk}")
 
                 return itempk
         except pyodbc.Error as e:

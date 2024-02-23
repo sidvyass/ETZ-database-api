@@ -1,4 +1,5 @@
 from connection import get_connection
+from exceptions import TableDoesNotExistError
 
 
 def _get_schema(table_name: str):
@@ -17,7 +18,10 @@ def _get_schema(table_name: str):
         """
         cursor.execute(query, table_name)
         schema = cursor.fetchall()
-        return schema
+        if schema:
+            return schema
+        else:
+            raise TableDoesNotExistError(table_name)
 
 
 def print_schema(schema):

@@ -15,3 +15,14 @@ test3_rfq_line = {
     "ItemFK": 10295,
     "QuoteFK": 2070,
 }
+
+quote_test = {
+    "CustomerFK": 2499,
+    "ItemFK": 7756,
+    "Revision": "F",
+}
+
+party_test = {
+    "Name": "test-api-test",
+    "Phone": 1111111,
+}

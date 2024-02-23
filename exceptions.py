@@ -21,5 +21,15 @@ class SchemaError(Exception):
     def column_does_not_exist_error(column_name):
         raise SchemaError(column_name, message="This column name does not exist")
 
+    @staticmethod
+    def mandetory_column_missing_error(column_name, table_name):
+        raise SchemaError(column_name, message=f"{column_name} is missing. This is mandetory for {table_name}")
+
+class TableDoesNotExistError(Exception):
+    def __init__(self, table_name, message="Table does not exist"):
+        self.table_name = table_name
+        self.message = message
+        super().__init__(f"{self.table_name} {self.message}")
+
 if __name__ == "__main__":
-    raise SchemaError.column_does_not_exist_error("1234")
+    raise TableDoesNotExistError("1234") 

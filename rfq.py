@@ -1,6 +1,6 @@
 from connection import get_connection
 from exceptions import ItemNotFoundError, SchemaError
-from general import _get_schema
+from schema import _get_schema
 from test_data import test1_dict, test2_rfq
 import pyodbc
 import logging
@@ -52,6 +52,7 @@ class RFQLine:
         schema = _get_schema(self.table_name)
         self.column_names = [name[0] for name in schema]
         self.insert_not_allowed = ["RequestForQuoteLinePK", ]
+        # self.insert_mandetory = ["RequestForQuoteFK", "ItemFK"]
         
     def column_check(self, columns):
         for value in columns:
@@ -59,6 +60,9 @@ class RFQLine:
                 raise SchemaError.column_does_not_exist_error(value)
             elif value in self.insert_not_allowed:
                 raise SchemaError.insertion_not_allowed_error(value)
+        # for val in self.insert_mandetory:
+        #     if val not in columns:
+        #         raise SchemaError.mandetory_column_missing_error(val, self.table_name)
 
     def insert_rfq_line(self, RequestForQuoteFK:int, update_dict:dict) -> int:
         """QuoteFK goes in the update_dict as of now, can be changed"""
