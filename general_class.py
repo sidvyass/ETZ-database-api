@@ -1,40 +1,41 @@
 from connection import get_connection
 from exceptions import ItemNotFoundError, SchemaError
-from schema import _get_schema, print_schema
-from test_data import party_test 
+from schema import _get_schema
 import pyodbc
 import logging
 
 
-class GeneralAPI:
-    """General API that processes all table requests
+class TableManger:
+    """TableManager that processes all table requests
     Pass table name in the constructor. Use insert, get, delete to get data.
     Import print_schema from schema and use self.schema to print with better visibility.
     Add any mandetory field to insert_mandetory or insert_not_allowed lists to run checks on them.
     """
 
     def __init__(self, table_name):
-        "Table name is the same as MieTrak"
+        """Table_name: name of the table in Mie Trak database"""
         self.table_name = table_name
-        # this changes to being the name table potentially
-        self.logger = logging.getLogger().getChild(self.__class__.__name__)
+        self.logger = logging.getLogger().getChild(f"GeneralAPI - {self.table_name}")
         self.schema = _get_schema(self.table_name)
         self.column_names = [name[0] for name in self.schema]
-        # always use .append in self.insert_not_allowed
         self.insert_not_allowed = [f"{self.table_name}PK", ]
         self.insert_mandetory = []
 
-    def _column_check(self, columns):
+        self.logger.info(f"init new. Table Name - {self.table_name}")
+
+    def _column_check(self, columns, insert=True):
         for value in columns:
             if value not in self.column_names:
                 raise SchemaError.column_does_not_exist_error(value)
             elif value in self.insert_not_allowed:
                 raise SchemaError.insertion_not_allowed_error(value)
-        for val in self.insert_mandetory:
-            if val not in columns:
-                raise SchemaError.mandetory_column_missing_error(val, self.table_name)   
+        if insert:
+            for val in self.insert_mandetory:
+                if val not in columns:
+                    raise SchemaError.mandetory_column_missing_error(val, self.table_name)   
 
     def insert(self, update_dict: dict):
+        """update_dict: key-value pairs of column_names: values. These values will be checked against the schema before they go in the table"""
         self._column_check(update_dict.keys())
         column_names, column_len = ", ".join([val for val in update_dict.keys()]), ", ".join(["?" for val in update_dict.keys()])
         values = [val for val in update_dict.values()]
@@ -56,7 +57,7 @@ class GeneralAPI:
     def get(self, *args, **kwargs) -> list:
         """args: define what is returned as a tuple
             kwargs: define what is passed a parameter"""
-        self._column_check(kwargs.keys())
+        self._column_check(kwargs.keys(), insert=False)
         return_param_string = ",".join(args) if args else "*" 
         query = f"SELECT {return_param_string} FROM {self.table_name}" 
         search_param_string = " WHERE "
@@ -69,7 +70,11 @@ class GeneralAPI:
             with get_connection() as conn:
                 cursor = conn.cursor()
                 cursor.execute(query)
-                return cursor.fetchall()
+                result = cursor.fetchall()
+                if result:
+                    return result
+                else:
+                    raise ItemNotFoundError
         except pyodbc.Error as e:
             print(e)
 

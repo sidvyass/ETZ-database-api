@@ -10,16 +10,9 @@ class Item:
     def __init__(self):
         self.logger = logging.getLogger().getChild(self.__class__.__name__)
         self.table_name = "item"
-        
-        schema = _get_schema(self.table_name)
-        self.column_names = [name[0] for name in schema]
-
+        self.schema = _get_schema(self.table_name)
+        self.column_names = [name[0] for name in self.schema]
         self.insert_not_allowed_column_names = ["itempk", ]
-
-        # for shubham
-        # self.default_values_dict = {
-
-        # }
 
     def column_check(self, columns):
         for value in columns:
@@ -122,4 +115,3 @@ class Item:
                 cursor.execute(query, itempk)
         except pyodbc.Error as e:
             print(e)
-
