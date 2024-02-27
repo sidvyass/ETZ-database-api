@@ -14,6 +14,7 @@ class TableManger:
 
     def __init__(self, table_name):
         """Table_name: name of the table in Mie Trak database"""
+        assert table_name not in ["item"]
         self.table_name = table_name
         self.logger = logging.getLogger().getChild(f"GeneralAPI - {self.table_name}")
         self.schema = _get_schema(self.table_name)
@@ -28,8 +29,9 @@ class TableManger:
         for value in columns:
             if value not in self.column_names:
                 raise SchemaError.column_does_not_exist_error(value)
-            elif value in self.insert_not_allowed:
-                raise SchemaError.insertion_not_allowed_error(value)
+            elif insert:
+                if value in self.insert_not_allowed:
+                    raise SchemaError.insertion_not_allowed_error(value)
         if insert:
             for val in self.insert_mandetory:
                 if val not in columns:

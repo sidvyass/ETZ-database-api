@@ -1,10 +1,8 @@
 from connection import get_connection
 from exceptions import ItemNotFoundError, SchemaError
 from schema import _get_schema
-from test_data import test1_dict
 import pyodbc
 import logging
-from logging_config import setup_logging
 
 
 class Item:
