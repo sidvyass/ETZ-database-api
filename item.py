@@ -4,6 +4,7 @@ from schema import _get_schema
 from test_data import test1_dict
 import pyodbc
 import logging
+from logging_config import setup_logging
 
 
 class Item:
@@ -13,6 +14,8 @@ class Item:
         self.schema = _get_schema(self.table_name)
         self.column_names = [name[0] for name in self.schema]
         self.insert_not_allowed_column_names = ["itempk", ]
+        
+        self.logger.info("Init new item class")
 
     def column_check(self, columns):
         for value in columns:
@@ -97,15 +100,30 @@ class Item:
         except pyodbc.Error as e:
             print(e)
                 
-    def get_item(self, itempk, return_columns=["*"]):
+    def get(self, *args, **kwargs) -> list:
+        """args: define what is returned
+            kwargs: define what is passed a parameter"""
+        self._column_check(kwargs.keys())
+        return_param_string = ",".join(args) if args else "*" 
+        query = f"SELECT {return_param_string} FROM {self.table_name}" 
+        search_param_string = " WHERE "
+        if kwargs:
+            search_param_string += " AND ".join([f"{key}='{str(value)}'" for key, value in kwargs.items()])
+            query += search_param_string
+        self.logger.info(f"GET METHOD Query Built -> {query}")
+
         try:
             with get_connection() as conn:
                 cursor = conn.cursor()
-                query = f"SELECT {return_columns} FROM ITEM WHERE itempk={itempk};"
                 cursor.execute(query)
-                return cursor.fetchone()[0]
+                result = cursor.fetchall()
+                if result:
+                    return result
+                else:
+                    raise ItemNotFoundError
         except pyodbc.Error as e:
-            print(e)        
+            print(e)
+
 
     def delete_item(self, itempk):
         try:

@@ -23,7 +23,8 @@ class TableManger:
 
         self.logger.info(f"init new. Table Name - {self.table_name}")
 
-    def _column_check(self, columns, insert=True):
+    def _column_check(self, columns, insert=False):
+        """Checks if the columns being accessed exist in the schema. Insert is False by default"""
         for value in columns:
             if value not in self.column_names:
                 raise SchemaError.column_does_not_exist_error(value)
@@ -36,7 +37,7 @@ class TableManger:
 
     def insert(self, update_dict: dict):
         """update_dict: key-value pairs of column_names: values. These values will be checked against the schema before they go in the table"""
-        self._column_check(update_dict.keys())
+        self._column_check(update_dict.keys(), insert=True)
         column_names, column_len = ", ".join([val for val in update_dict.keys()]), ", ".join(["?" for val in update_dict.keys()])
         values = [val for val in update_dict.values()]
         query = f"""INSERT INTO {self.table_name} ({column_names})
@@ -57,7 +58,7 @@ class TableManger:
     def get(self, *args, **kwargs) -> list:
         """args: define what is returned as a tuple
             kwargs: define what is passed a parameter"""
-        self._column_check(kwargs.keys(), insert=False)
+        self._column_check(kwargs.keys())
         return_param_string = ",".join(args) if args else "*" 
         query = f"SELECT {return_param_string} FROM {self.table_name}" 
         search_param_string = " WHERE "
@@ -82,7 +83,7 @@ class TableManger:
         pass
 
     def delete(self, pk):
-        f"""Takes {self.table_name}PK and deletes that entry"""
+        """Takes PK and deletes that entry"""
         try:
             with get_connection() as conn:
                 cursor = conn.cursor()
