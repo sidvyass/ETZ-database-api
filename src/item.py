@@ -1,6 +1,6 @@
 from connection import get_connection
 from exceptions import ItemNotFoundError, SchemaError
-from schema import _get_schema
+from schema import _get_schema, print_schema
 import pyodbc
 import logging
 
@@ -15,7 +15,7 @@ class Item:
         
         self.logger.info("Init new item class")
 
-    def column_check(self, columns):
+    def _column_check(self, columns):
         for value in columns:
             if value not in self.column_names:
                 raise SchemaError.column_does_not_exist_error(value)
@@ -100,7 +100,7 @@ class Item:
                 
     def get(self, *args, **kwargs) -> list:
         """args: define what is returned
-            kwargs: define what is passed a parameter"""
+            kwargs: define what is passed a parameter. NOTE- kwargs are case sensitive"""
         self._column_check(kwargs.keys())
         return_param_string = ",".join(args) if args else "*" 
         query = f"SELECT {return_param_string} FROM {self.table_name}" 
